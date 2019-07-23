@@ -206,7 +206,6 @@ public class Note extends JFrame implements ActionListener {
             //默认窗口也要显示信息
             if (!lookAndFeel.getClass().getName().equalsIgnoreCase(sysLookAndFeelName)) {
                 skinLookAndFeelService.delAll();
-                this.getRootPane().setWindowDecorationStyle(this.getRootPane().getWindowDecorationStyle());
                 doRestart();
             } else {
                 logger.info("已经是Windows样式窗口，不用反复替换");
@@ -1919,12 +1918,12 @@ public class Note extends JFrame implements ActionListener {
         //打开文件
         openFileJMenuItem.addActionListener(getOpenFileActionListener());
         //快捷键CTRL+O
-        openFileJMenuItem.setAccelerator(KeyStroke.getKeyStroke(java.awt.event.KeyEvent.VK_O,
+        openFileJMenuItem.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_O,
                 CTRL_MASK));
         //保存文件
         saveJMenuItem.addActionListener(getSaveFileActionListener());
         //快捷键CTRL+S
-        saveJMenuItem.setAccelerator(KeyStroke.getKeyStroke(java.awt.event.KeyEvent.VK_S,
+        saveJMenuItem.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_S,
                 CTRL_MASK));
         //助记符
         saveJMenuItem.setMnemonic('S');
@@ -2037,14 +2036,31 @@ public class Note extends JFrame implements ActionListener {
      * 重启
      */
     private void doRestart() {
-        ThreadPool.shutDownThreadPool();
-        NoteStartBar noteStartBar = new NoteStartBar(inputTextArea
-                .getText());
         try {
-            main(null);
-            //            ThreadPool.startThread(noteStartBar, null);
-            this.dispose();
+            String dir = FindDir.getProjectDir();
+            File fileDir = new File(dir);
+            if (fileDir.isDirectory()) {
+                String[] fileNameList = fileDir.list();
+                if (null != fileNameList && fileNameList.length > 0) {
+                    for (String name : fileNameList) {
+                        File file = new File(name);
+                        if (file.isFile() && file.getName().startsWith("NoteBook")
+                                && file.getName().endsWith(".exe")) {
+                            Runtime.getRuntime().exec(file.getAbsolutePath());
+                            //等,保证分身启动完成后，再关掉自己
+                            Thread.sleep(100);
+                            logger.info("程序准备重启！");
+                            System.exit(0);
+                            break;
+                        }
+                    }
+                } else {
+                    logger.warn("文件位置错误！");
+                }
+            }
+            new ShowMsgSinglePanel("文件重启失败！", this);
         } catch (Exception e) {
+            new ShowMsgSinglePanel(e.getMessage(), this);
             logger.warn("重启失败" + e);
         }
     }
