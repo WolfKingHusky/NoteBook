@@ -77,6 +77,7 @@ public class AddExceptionFrame extends JFrame {
     private UndoManager undoExceptCauseMsgManager = new UndoManager();
 
     public AddExceptionFrame(Note jFrame) {
+        this.toFront();
         //非Windows主题才能设置透明度
         if (!InitialComponent.isWindowsLookAndFeel()) {
             this.setUndecorated(true);
@@ -269,10 +270,10 @@ public class AddExceptionFrame extends JFrame {
             String cause = exceptionCause.getText().trim();
             if (StringUtils.isEmpty(msg)) {
                 exceptionMsg.requestFocus();
-                new JRootParentDiag(AddExceptionFrame.this,"异常信息不能为空",Constants.NOTICE_IMAGE);
+                new JRootParentDiag(AddExceptionFrame.this,"异常信息不能为空", Constants.NOTICE_IMAGE);
             } else if (StringUtils.isEmpty(answerMsg)) {
                 exceptionAnswerMsg.requestFocus();
-                new JRootParentDiag(AddExceptionFrame.this,"异常信息答案不能为空",Constants.NOTICE_IMAGE);
+                new JRootParentDiag(AddExceptionFrame.this,"异常信息答案不能为空", Constants.NOTICE_IMAGE);
             } else if (StringUtils.isEmpty(keyWords)) {
                 keyFiled.requestFocus();
                 JOptionPane.showMessageDialog(null, "关键字不能为空");

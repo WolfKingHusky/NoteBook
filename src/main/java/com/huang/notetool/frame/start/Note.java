@@ -156,10 +156,10 @@ public class Note extends JFrame implements ActionListener {
                 UIManager.setLookAndFeel(substanceCremeCoffeeLookAndFeel);
 
                 setSkin(skinLookAndFeel);
+                SwingUtilities.updateComponentTreeUI(this);
                 //javax.swing.plaf.metal.MetalRootPaneUI cannot be cast to org.jvnet.substance
                 // .SubstanceRootPaneUI
                 //没有这个会跑抛出异常
-                SwingUtilities.updateComponentTreeUI(this);
             }
         } catch (Exception ex) {
             logger.warn("加载系统样式失败" + ex);
@@ -205,11 +205,9 @@ public class Note extends JFrame implements ActionListener {
             String sysLookAndFeelName = UIManager.getSystemLookAndFeelClassName();
             //默认窗口也要显示信息
             if (!lookAndFeel.getClass().getName().equalsIgnoreCase(sysLookAndFeelName)) {
-                ThreadPool.shutDownThreadPool();
-                NoteStartBar noteStartBar = new NoteStartBar(inputTextArea
-                        .getText());
-                ThreadPool.startThread(noteStartBar, null);
-                this.dispose();
+                skinLookAndFeelService.delAll();
+                this.getRootPane().setWindowDecorationStyle(this.getRootPane().getWindowDecorationStyle());
+                doRestart();
             } else {
                 logger.info("已经是Windows样式窗口，不用反复替换");
             }
@@ -1953,6 +1951,7 @@ public class Note extends JFrame implements ActionListener {
         JMenuItem addNewJMenu = InitialComponent.setJMenuItem("新建", Color.black, true);
         speedup = InitialComponent.setJMenuItem("运行加速", Color.blue, true);
         JMenuItem exitJMenuItem = InitialComponent.setJMenuItem("退出", Color.black, true);
+        JMenuItem restartJMenuItem = InitialComponent.setJMenuItem("重启", Color.black, true);
 
         //开始菜单下的字体大小
         JMenu fontSizeJMenu = InitialComponent.setJMenu("字体大小", null),
@@ -1991,6 +1990,7 @@ public class Note extends JFrame implements ActionListener {
         startJMenu.add(findAndReplaceJMenu);
         startJMenu.add(openAndSaveJMenu);
         startJMenu.add(exitJMenuItem);
+        startJMenu.add(restartJMenuItem);
 
         //新建
         addNewJMenu.addActionListener(addNewActionListener());
@@ -2008,8 +2008,45 @@ public class Note extends JFrame implements ActionListener {
         //监听执行事件
         exitJMenuItem.addActionListener(exitActionListener(fileName,
                 inputTextArea.getText().trim()));
-        //快捷键CTRL+caps lock
-        exitJMenuItem.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_CAPS_LOCK, CTRL_MASK));
+        //快捷键CTRL+ALT+E
+        exitJMenuItem.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_E, CTRL_MASK | ALT_MASK));
+        //快捷键CTRL+ALT+R
+        restartJMenuItem.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_R,
+                CTRL_MASK | ALT_MASK));
+        restartJMenuItem.addActionListener(restartActionListener(fileName,
+                inputTextArea.getText().trim()));
+    }
+
+    /**
+     * 退出事件
+     *
+     * @param fileName    文件名
+     * @param fileContent 文件内容
+     * @return ActionListener
+     */
+    private ActionListener restartActionListener(String fileName, String fileContent) {
+        return e -> {
+            if (checkIsSave(fileName, fileContent)) {
+                saveSkin();
+                doRestart();
+            }
+        };
+    }
+
+    /**
+     * 重启
+     */
+    private void doRestart() {
+        ThreadPool.shutDownThreadPool();
+        NoteStartBar noteStartBar = new NoteStartBar(inputTextArea
+                .getText());
+        try {
+            main(null);
+            //            ThreadPool.startThread(noteStartBar, null);
+            this.dispose();
+        } catch (Exception e) {
+            logger.warn("重启失败" + e);
+        }
     }
 
     /**
